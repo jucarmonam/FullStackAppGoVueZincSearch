@@ -3,7 +3,6 @@ package main
 import (
 	"Indexer/models"
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,11 +13,12 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"strings"
+	"sync"
 )
 
 func main() {
-	path := "C:\\Users\\juan\\Desktop\\PruebaTruora\\enron_mail_20110402\\maildir"
-	//path := os.Args[1]
+	//path := "C:\\Users\\juan\\Desktop\\PruebaTruora\\enron_mail_20110402\\maildir"
+	path := os.Args[1]
 
 	////Proceso de rendimiento de la aplicación/////////////
 	cpu, err := os.Create("cpu.prof")
@@ -30,24 +30,9 @@ func main() {
 	////////Fin prceso de rendimiento de la aplicación/////////
 
 	fmt.Println("Indexing")
+
 	//read fyle system folder
-	allEmails := readFolder(path)
-
-	var ndjson bytes.Buffer
-
-	// Generate the NDJSON variable
-	for _, email := range allEmails {
-		jsonData, err := json.Marshal(email)
-		if err != nil {
-			fmt.Println("Error marshaling JSON:", err)
-			return
-		}
-		ndjson.Write(jsonData)
-		ndjson.WriteString("\n")
-	}
-
-	//Inserting in zinsearch
-	zincSearchInsert(ndjson.String())
+	readFolder(path)
 
 	////Proceso de rendimiento de la aplicación/////////////
 	runtime.GC()
@@ -62,27 +47,33 @@ func main() {
 	////Fin proceso de rendimiento de la aplicación/////////////
 }
 
-func readFolder(mainPath string) []models.Email {
-	emails := make([]models.Email, 0)
-	counter := 0
+func readFolder(mainPath string) {
+	maxWorkers := 4
+	var wg sync.WaitGroup
+	// Create a channel to receive file paths
+	paths := make(chan string)
+
+	//counter := 0
+
+	// Start the worker goroutines
+	for i := 0; i < maxWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for path := range paths {
+				readFile(path)
+			}
+		}()
+	}
+
 	err := filepath.Walk(mainPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			log.Println(err)
 			return err
 		}
-
-		if counter == 1000 {
-			return filepath.SkipDir
-		}
-
-		if info.IsDir() {
-			// Skip directories
+		if !info.Mode().IsRegular() {
 			return nil
 		}
-
-		emails = append(emails, readFile(path))
-
-		counter++
+		paths <- path
 		return nil
 	})
 
@@ -90,17 +81,19 @@ func readFolder(mainPath string) []models.Email {
 		log.Println(err)
 	}
 
-	return emails
+	close(paths)
+
+	wg.Wait()
 }
 
-func readFile(name string) models.Email {
+func readFile(name string) {
 	file, err := os.Open(name)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 
-	buf := []byte{}
+	var buf []byte
 	scanner := bufio.NewScanner(file)
 	scanner.Buffer(buf, 2048*1024)
 	newEmail := models.Email{}
@@ -138,11 +131,12 @@ func readFile(name string) models.Email {
 		log.Fatalf("something bad happened in the line %v: %v", lineNumber, err)
 	}
 
-	return newEmail
+	jsonData, _ := json.Marshal(newEmail)
+	zincSearchInsert(jsonData)
 }
 
-func zincSearchInsert(emails string) {
-	req, err := http.NewRequest("POST", "http://localhost:4080/api/emails/_multi", strings.NewReader(emails))
+func zincSearchInsert(email []byte) {
+	req, err := http.NewRequest("POST", "http://localhost:4080/api/emails/_doc", strings.NewReader(string(email)))
 	if err != nil {
 		log.Fatal(err)
 	}
