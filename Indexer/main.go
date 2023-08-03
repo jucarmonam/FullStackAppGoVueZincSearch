@@ -16,37 +16,6 @@ import (
 	"sync"
 )
 
-func main() {
-	//path := "C:\\Users\\juan\\Desktop\\PruebaTruora\\enron_mail_20110402\\maildir"
-	path := os.Args[1]
-
-	////Proceso de rendimiento de la aplicación/////////////
-	cpu, err := os.Create("cpu.prof")
-	if err != nil {
-		log.Fatal(err)
-	}
-	pprof.StartCPUProfile(cpu)
-	defer pprof.StopCPUProfile()
-	////////Fin prceso de rendimiento de la aplicación/////////
-
-	fmt.Println("Indexing")
-
-	//read fyle system folder
-	readFolder(path)
-
-	////Proceso de rendimiento de la aplicación/////////////
-	runtime.GC()
-	mem, err := os.Create("memory.prof")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer mem.Close()
-	if err := pprof.WriteHeapProfile(mem); err != nil {
-		log.Fatal(err)
-	}
-	////Fin proceso de rendimiento de la aplicación/////////////
-}
-
 func readFolder(mainPath string) {
 	maxWorkers := 4
 	var wg sync.WaitGroup
@@ -150,9 +119,42 @@ func zincSearchInsert(email []byte) {
 	}
 	defer resp.Body.Close()
 	log.Println(resp.StatusCode)
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println(string(body))
+}
+
+func main() {
+	//path := "C:\\Users\\juan\\Desktop\\PruebaTruora\\enron_mail_20110402\\maildir"
+	path := os.Args[1]
+
+	//Inicio de profiling
+	cpu, err := os.Create("cpu.prof")
+	if err != nil {
+		log.Fatal(err)
+	}
+	pprof.StartCPUProfile(cpu)
+	defer pprof.StopCPUProfile()
+
+	fmt.Println("Indexing")
+
+	//read fyle system folder
+	readFolder(path)
+
+	//Se crean archivos finales de prifiling
+	runtime.GC()
+	mem, err := os.Create("memory.prof")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer mem.Close()
+	if err := pprof.WriteHeapProfile(mem); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Indexing finished")
+	//go tool pprof -http=:8020 cpu.prof
 }
