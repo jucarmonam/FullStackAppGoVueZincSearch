@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import TheWelcome from '../components/TheWelcome.vue'
+import Searcher from '../components/Searcher.vue'
 </script>
 
 <template>
   <main>
-    <TheWelcome />
+    <Searcher />
   </main>
 </template>

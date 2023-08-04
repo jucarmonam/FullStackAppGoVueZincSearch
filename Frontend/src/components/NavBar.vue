@@ -1,27 +1,14 @@
 <script setup lang="ts"></script>
 
 <template>
-    <div class="flex max-w-2xl mx-auto bg-white rounded-sm shadow-md">
-    <div>
-      <img
-        class="h-full w-full object-cover"
-        src="../assets/logo.svg"
-        alt="Closeup code"
-      />
-    </div>
-    <div class="p-8">
-      <div class="uppercase tracking-wide text-sm text-violet-500 font-medium">
-        Vue
-      </div>
-      <a
-        href="#"
-        class="mt-1 text-lg tracking-tight font-medium text-black hover:underline"
-        >Building Vue 3 Components With Tailwind CSS
+  <nav class="bg-black border-gray-200 dark:bg-gray-900">
+    <div class="max-w-screen-xxl flex flex-wrap p-4">
+      <a class="flex items-center">
+        <img src="../assets/emailIcon.png" class="h-25 mr-3">
       </a>
-      <p class="mt-2 text-sm text-slate-500">
-        Learn how to create visually stunning Vue components using the popular
-        utility-first CSS framework Tailwind.
-      </p>
+      <div class="self-center">
+        <h1 class="text-xl font-bold text-center text-white">Email searcher by key</h1>
+      </div>
     </div>
-  </div>
+  </nav>
 </template>

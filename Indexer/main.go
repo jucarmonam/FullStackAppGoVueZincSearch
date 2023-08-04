@@ -17,7 +17,7 @@ import (
 )
 
 func readFolder(mainPath string) {
-	maxWorkers := 4
+	maxWorkers := 5
 	var wg sync.WaitGroup
 	// Create a channel to receive file paths
 	paths := make(chan string)
@@ -68,12 +68,22 @@ func readFile(name string) {
 	newEmail := models.Email{}
 
 	lineNumber := 0
-	counter := 0
+	body := false
 	for scanner.Scan() {
 		lineNumber++
+
 		line := scanner.Text()
+
+		if body {
+			if newEmail.Body == "" && line == "" {
+				continue
+			}
+			newEmail.Body += line + "\n"
+			continue
+		}
+
 		index := strings.Index(line, ":")
-		if index != -1 && index < len(line)-1 && counter < 5 {
+		if index != -1 && index < len(line)-1 {
 			key := strings.TrimSpace(line[:index])
 			value := strings.TrimSpace(line[index+1:])
 
@@ -89,11 +99,19 @@ func readFile(name string) {
 				newEmail.To = value
 			case "Subject":
 				newEmail.Subject = value
+			case "X-FileName":
+				body = true
+			default:
+				continue
 			}
-			counter++
-		} else {
-			newEmail.Body = newEmail.Body + line + "\n"
 		}
+	}
+
+	lines := strings.Split(newEmail.Body, "\n")
+	first := lines[0]
+
+	if strings.Contains(first, "Mime-Version:") {
+		fmt.Println("aqui tamos gente")
 	}
 
 	if err := scanner.Err(); err != nil {
