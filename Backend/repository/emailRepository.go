@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 )
 
 type EmailRepository struct{}
@@ -23,7 +24,8 @@ func (er EmailRepository) CallZincSearch(key string) ([]byte, error, *http.Respo
 	}
 
 	body, _ := json.Marshal(params)
-	req, err := http.NewRequest("POST", "http://localhost:4080/api/emails/_search", bytes.NewBuffer(body))
+	dbUrl := os.Getenv("DATABASE_URL")
+	req, err := http.NewRequest("POST", dbUrl, bytes.NewBuffer(body))
 
 	if err != nil {
 		log.Fatal(err)

@@ -4,6 +4,7 @@ import (
 	"Backend/controller"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +15,11 @@ func main() {
 
 	if fromEnv := os.Getenv("PORT"); fromEnv != "" {
 		port = fromEnv
+	}
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
 	}
 
 	log.Printf("Starting up on http://localhost:%s", port)
