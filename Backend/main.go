@@ -29,8 +29,8 @@ func main() {
 	// Basic CORS
 	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000", "https://main.d3clb8hn1nqouj.amplifyapp.com"}, // Use this to allow specific origin hosts
-		//AllowedOrigins: []string{"https://*", "http://*"},
+		//AllowedOrigins: []string{"http://localhost:3000"}, // Use this to allow specific origin hosts
+		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
